@@ -1,3 +1,23 @@
+# Multimodal FastAPI AI Demo
+
+This project demonstrates a multimodal AI system using FastAPI that processes:
+- Text
+- Images
+- Audio
+- Video
+
+## Features
+- FastAPI backend
+- OpenAI reasoning
+- Dockerized deployment
+- Browser-based UI
+
+## Run Locally
+
+
+
+
+
 -------------------Test locally with Docker------------------
 1. Start Docker Desktop
 2. Build the docker at the same route where your folder is located (sentiment-web-app)
