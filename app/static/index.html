@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Multimodal AI Analyzer</title>
+
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="data:,">
+</head>
+
+<body>
+
+<h2>🧠 Multimodal AI Analyzer</h2>
+<p class="subtitle">
+  Upload text, image, audio, and/or video to receive a unified AI analysis.
+</p>
+
+<form id="form" enctype="multipart/form-data">
+  <textarea
+    name="text"
+    rows="4"
+    placeholder="Enter analysis instruction (optional)">
+  </textarea>
+
+  <input type="file" name="image" accept="image/*">
+  <input type="file" name="audio" accept="audio/*">
+  <input type="file" name="video" accept="video/*">
+
+  <button type="submit">Analyze</button>
+</form>
+
+<div id="error"></div>
+
+<div id="result">
+
+  <h3>📊 Analysis Result</h3>
+
+  <section>
+    <h4>🧠 Final Assessment</h4>
+    <p id="final_reasoning"></p>
+  </section>
+
+  <section>
+    <h4>🖼️ Image Analysis</h4>
+    <ul id="image_analysis"></ul>
+  </section>
+
+  <section>
+    <h4>🎙️ Audio Analysis</h4>
+    <p id="audio_analysis"></p>
+  </section>
+
+  <section>
+    <h4>🎥 Video Analysis</h4>
+    <ul id="video_analysis"></ul>
+  </section>
+
+</div>
+
+<script>
+document.getElementById("form").onsubmit = async (e) => {
+  e.preventDefault();
+
+  document.getElementById("error").textContent = "";
+  document.getElementById("result").style.display = "none";
+
+  const formData = new FormData(e.target);
+
+  try {
+    const res = await fetch("/api/analyze", {
+      method: "POST",
+      body: formData
+    });
+
+    if (!res.ok) {
+      throw new Error("Server error");
+    }
+
+    const data = await res.json();
+
+    /* ===============================
+       FINAL REASONING (ALWAYS FIRST)
+       =============================== */
+    document.getElementById("final_reasoning").textContent =
+      (data.final_reasoning && data.final_reasoning.trim())
+        ? data.final_reasoning
+        : "No final assessment could be generated.";
+
+    /* ===============================
+       IMAGE ANALYSIS
+       =============================== */
+    const imageList = document.getElementById("image_analysis");
+    imageList.innerHTML = "";
+
+    if (data.modal_outputs && data.modal_outputs.image) {
+      const image = data.modal_outputs.image;
+      let rendered = false;
+
+      Object.keys(image).forEach(key => {
+        const value = image[key];
+        const li = document.createElement("li");
+
+        if (Array.isArray(value)) {
+          li.textContent = `${key}: ${value.join(", ")}`;
+        } else {
+          li.textContent = `${key}: ${value}`;
+        }
+
+        imageList.appendChild(li);
+        rendered = true;
+      });
+
+      if (!rendered) {
+        imageList.innerHTML =
+          "<li><em>Image processed successfully, no notable patterns detected.</em></li>";
+      }
+    } else {
+      imageList.innerHTML = "<li>No image provided.</li>";
+    }
+
+    /* ===============================
+       AUDIO ANALYSIS
+       =============================== */
+    document.getElementById("audio_analysis").textContent =
+      data.modal_outputs?.audio?.transcript
+        ? data.modal_outputs.audio.transcript
+        : "No audio provided.";
+
+    /* ===============================
+       VIDEO ANALYSIS (CRITICAL FIX)
+       =============================== */
+    const videoList = document.getElementById("video_analysis");
+    videoList.innerHTML = "";
+
+    if (data.modal_outputs && data.modal_outputs.video) {
+      const video = data.modal_outputs.video;
+      let rendered = false;
+
+      Object.keys(video).forEach(key => {
+        const value = video[key];
+        const li = document.createElement("li");
+
+        if (Array.isArray(value)) {
+          li.textContent = `${key}: ${value.join(", ")}`;
+        } else {
+          li.textContent = `${key}: ${value}`;
+        }
+
+        videoList.appendChild(li);
+        rendered = true;
+      });
+
+      if (!rendered) {
+        videoList.innerHTML =
+          "<li><em>Video processed successfully, no significant events detected.</em></li>";
+      }
+
+    } else {
+      videoList.innerHTML = "<li>No video provided.</li>";
+    }
+
+    document.getElementById("result").style.display = "block";
+
+  } catch (err) {
+    document.getElementById("error").textContent =
+      "An error occurred while processing the request.";
+  }
+};
+</script>
+
+</body>
+</html>
